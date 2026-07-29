@@ -78,16 +78,30 @@
 
         /* ESTADO NORMAL (CELULAR VERTICAL) */
         .contenedor-piano {
-            width: 100%; overflow-x: auto; display: flex; justify-content: flex-start;
-            padding: 10px 0; border-top: 1px solid #333; border-bottom: 1px solid #333;
+            width: 100%; 
+            overflow-x: auto; 
+            display: flex; 
+            justify-content: flex-start;
+            padding: 10px 0; 
+            border-top: 1px solid #333; 
+            border-bottom: 1px solid #333;
+            -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
         }
-        /* Para 4 octavas, el SVG va a medir aprox 1200px */
-        #svg-piano { min-width: 1180px; height: 180px; overflow: visible; }
+        /* Las 4 octavas requieren aprox 1180px para no perder proporción */
+        #svg-piano { min-width: 1180px; height: 160px; overflow: visible; }
 
         /* SENSOR DE ROTACIÓN: ESTADO CELULAR HORIZONTAL / PC */
         @media (orientation: landscape) {
-            .contenedor-piano { justify-content: flex-start; overflow-x: auto; }
-            #svg-piano { min-width: 1180px; width: 100%; height: auto; }
+            .contenedor-piano { 
+                justify-content: flex-start; 
+                overflow-x: auto; 
+            }
+            #svg-piano { 
+                min-width: 1180px; /* Fuerza el scroll horizontal para que las teclas no se achiquen */
+                width: 100%; 
+                height: auto; 
+                max-height: 220px; /* Limita la altura para no tapar los botones */
+            }
         }
 
         .titulo-seccion { color: #fff; font-weight: 300; font-size: 1em; margin-bottom: 5px; margin-top: 15px; width: 90%; max-width: 420px; text-align: left; }
@@ -392,7 +406,6 @@
                         rect.setAttribute("fill", fillColor);
                         rect.setAttribute("stroke", "#333");
                         rect.setAttribute("stroke-width", "1");
-                        // Se removió el destello de neon para mayor claridad
                         svg.appendChild(rect);
 
                         // Texto SOLO si pertenece a la escala
@@ -446,7 +459,6 @@
                     rect.setAttribute("fill", fillColor);
                     rect.setAttribute("stroke", "#000");
                     rect.setAttribute("stroke-width", "1");
-                    // Se removió el destello de neon para mayor claridad
                     svg.appendChild(rect);
 
                     // Texto SOLO si pertenece a la escala
@@ -589,6 +601,19 @@
             favs[nombreCarpeta].splice(idx, 1);
             guardarFavoritos(favs);
             abrirCarpeta(nombreCarpeta);
+        }
+
+        // Registrar el Service Worker para PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registrado con éxito:', registration.scope);
+                    })
+                    .catch(err => {
+                        console.log('Error al registrar el ServiceWorker:', err);
+                    });
+            });
         }
     </script>
 </body>
