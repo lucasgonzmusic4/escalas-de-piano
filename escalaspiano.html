@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0a0a0a">
+    <title>Escalas de Piano - Lucas Gonzalez</title>
+    
+    <!-- Enlaces obligatorios PWA -->
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="./icono.png">
+    
+    <!-- Alertas Profesionales -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        html, body {
+            background-color: #0a0a0a; color: #ffffff;
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0; padding: 0; overflow-x: hidden; 
+            user-select: none; -webkit-user-select: none;
+        }
+
+        .titulo-flet {
+            color: #00f3ff;
+            font-size: 1.8em; font-weight: 900; text-align: center;
+            margin-top: 40px; letter-spacing: 2px;
+        }
+        
+        .titulo-activacion {
+            color: #ff00ff;
+            font-size: 1.5em; font-weight: 900; text-align: center;
+            margin-top: 40px; letter-spacing: 2px;
+        }
+
+        .pantalla { display: none; width: 100vw; min-height: 100vh; flex-direction: column; align-items: center; background-color: #0a0a0a; padding-bottom: 40px; }
+        .activa { display: flex; }
+
+        /* Botones estilo Flet Original */
+        .btn-principal {
+            padding: 15px 30px; margin: 10px; font-size: 1em; font-weight: 700;
+            cursor: pointer; border-radius: 5px; transition: 0.3s;
+            width: 85%; max-width: 380px; text-transform: uppercase; letter-spacing: 1px;
+            display: flex; justify-content: center; align-items: center; gap: 10px;
+            border: none;
+        }
+        .btn-fucsia { background-color: #ff00ff; color: #ffffff; box-shadow: 0 4px 15px rgba(255, 0, 255, 0.2); }
+        .btn-fucsia:active { background-color: #cc00cc; }
+
+        .btn-transparente { background-color: transparent; color: #00f3ff; border: 1px solid #00f3ff; }
+        .btn-transparente:active { background-color: rgba(0, 243, 255, 0.1); }
+
+        .btn-peligro { background-color: #ff3333; color: #fff; width: auto; padding: 10px 15px; border-radius: 5px;}
+        .btn-peligro:active { background-color: #cc0000; }
+
+        /* Inputs estilo Flet */
+        .input-cyber {
+            width: 90%; max-width: 420px; padding: 15px;
+            background-color: #111; color: #00f3ff; border: 1px solid #ff00ff;
+            border-radius: 5px; font-size: 1.1em; margin-bottom: 20px;
+            outline: none; box-sizing: border-box; font-weight: bold;
+        }
+        select.input-cyber {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ff00ff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat; background-position: right 20px top 50%; background-size: 15px auto;
+        }
+        .input-cyber:focus { box-shadow: 0 0 10px rgba(255,0,255,0.3); }
+
+        .visor-escala {
+            width: 95%; max-width: 1200px;
+            background: #111; border-radius: 10px;
+            padding: 20px; box-sizing: border-box;
+            display: flex; flex-direction: column; align-items: center; margin-top: 10px;
+        }
+
+        /* ESTADO NORMAL (CELULAR VERTICAL) */
+        .contenedor-piano {
+            width: 100%; overflow-x: auto; display: flex; justify-content: flex-start;
+            padding: 10px 0; border-top: 1px solid #333; border-bottom: 1px solid #333;
+        }
+        /* Para 4 octavas, el SVG va a medir aprox 1200px */
+        #svg-piano { min-width: 1180px; height: 180px; overflow: visible; }
+
+        /* SENSOR DE ROTACIÓN: ESTADO CELULAR HORIZONTAL / PC */
+        @media (orientation: landscape) {
+            .contenedor-piano { justify-content: flex-start; overflow-x: auto; }
+            #svg-piano { min-width: 1180px; width: 100%; height: auto; }
+        }
+
+        .titulo-seccion { color: #fff; font-weight: 300; font-size: 1em; margin-bottom: 5px; margin-top: 15px; width: 90%; max-width: 420px; text-align: left; }
+        
+        .leyenda { display: flex; gap: 20px; margin-top: 15px; margin-bottom: 15px; font-size: 0.85em; font-weight: bold; letter-spacing: 1px; }
+        .leyenda-item { display: flex; align-items: center; gap: 8px; }
+        .punto-tonica { width: 14px; height: 14px; background: #ff00ff; border-radius: 50%; box-shadow: 0 0 8px #ff00ff; }
+        .punto-escala { width: 14px; height: 14px; background: #00f3ff; border-radius: 50%; box-shadow: 0 0 8px #00f3ff; }
+
+        .lista-favs { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        .item-fav { display: flex; justify-content: space-between; align-items: center; background: #111; padding: 10px; border-radius: 8px; border: 1px solid #222;}
+    </style>
+</head>
+<body>
+
+    <!-- ================= LOGIN ================= -->
+    <div id="pantalla-login" class="pantalla activa">
+        <h1 class="titulo-activacion">ACTIVACIÓN DE SOFTWARE</h1>
+        
+        <div style="margin-top: 20px; width: 100%; display: flex; flex-direction: column; align-items: center;">
+            <p style="color: #777; width: 90%; max-width: 420px; text-align: center; margin-bottom: 20px; font-size: 0.9em;">
+                Ingresa el correo con el que realizaste la compra.
+            </p>
+            <input type="email" id="input-email-login" class="input-cyber" style="border-color: #00f3ff; color: #fff;" placeholder="Email de Compra">
+            <button class="btn-principal btn-fucsia" onclick="intentarActivar()">ACTIVAR APLICACIÓN</button>
+            <p id="mensaje-login" style="color: red; font-weight: bold; margin-top: 15px;"></p>
+        </div>
+    </div>
+
+    <!-- ================= INICIO (CONFIGURADOR) ================= -->
+    <div id="pantalla-inicio" class="pantalla" style="padding-top: 30px;">
+        <h1 class="titulo-flet">ESCALAS DE PIANO</h1>
+        
+        <h2 class="titulo-seccion">TÓNICA</h2>
+        <select id="select-tonica" class="input-cyber"></select>
+
+        <h2 class="titulo-seccion">ESTRUCTURA</h2>
+        <select id="select-escala" class="input-cyber"></select>
+
+        <button class="btn-principal btn-fucsia" onclick="generarEscalaYMostrar()" style="margin-top: 20px;">VER ESCALA</button>
+        <button class="btn-principal btn-transparente" onclick="irAFavoritos()">Escalas Favoritas</button>
+    </div>
+
+    <!-- ================= VISOR DEL PIANO ================= -->
+    <div id="pantalla-escala" class="pantalla" style="padding-top: 20px;">
+        <h2 id="titulo-escala-vista" style="color: #ff00ff; margin-bottom: 5px; font-size: 1.5em; text-align: center; font-weight: bold;"></h2>
+        <p id="subtitulo-escala" style="color: #00f3ff; margin-top: 0; font-size: 1em;">TECLADO COMPLETO (4 OCTAVAS)</p>
+
+        <div class="visor-escala">
+            <div class="leyenda">
+                <div class="leyenda-item"><div class="punto-tonica"></div> TÓNICA</div>
+                <div class="leyenda-item"><div class="punto-escala"></div> EN ESCALA</div>
+            </div>
+
+            <div class="contenedor-piano">
+                <svg id="svg-piano" viewBox="0 0 1180 160"></svg>
+            </div>
+            
+            <div style="display: flex; gap: 10px; width: 100%; justify-content: center; margin-top: 25px; flex-wrap: wrap;">
+                <button class="btn-principal btn-fucsia" onclick="abrirModalGuardar()" style="width: auto; padding: 10px 20px; font-size: 0.9em;">Guardar en favoritos</button>
+                <button class="btn-principal btn-transparente" onclick="cambiarPantalla('pantalla-inicio')" style="width: auto; padding: 10px 20px; font-size: 0.9em; border-color: #00f3ff; color: #00f3ff;">Volver al Inicio</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= FAVORITOS (CARPETAS) ================= -->
+    <div id="pantalla-favoritos" class="pantalla" style="padding-top: 30px;">
+        <h1 class="titulo-flet">TUS CARPETAS</h1>
+        
+        <div id="lista-carpetas" class="lista-favs"></div>
+        
+        <button class="btn-principal btn-transparente" onclick="cambiarPantalla('pantalla-inicio')" style="margin-top: 30px;">Volver al Inicio</button>
+    </div>
+
+    <!-- ================= FAVORITOS (ESCALAS POR CARPETA) ================= -->
+    <div id="pantalla-lista-escalas" class="pantalla" style="padding-top: 30px;">
+        <h1 id="titulo-carpeta-vista" class="titulo-flet">CARPETA</h1>
+        
+        <div id="lista-escalas-items" class="lista-favs"></div>
+        
+        <button class="btn-principal btn-fucsia" onclick="irAFavoritos()" style="margin-top: 30px;">Volver a Carpetas</button>
+    </div>
+
+    <!-- LOGICA PRINCIPAL -->
+    <script>
+        // --- MOTOR ENARMÓNICO INTELIGENTE ---
+        class EnharmonicEngine {
+            constructor() {
+                this.sharpKeys = ['G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'e', 'b', 'f#', 'c#', 'g#', 'd#', 'a#', 'C', 'a'];
+                this.flatKeys = ['F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb', 'd', 'g', 'c', 'f', 'bb', 'eb', 'ab'];
+                this.notesSharp = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+                this.notesFlat = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+            }
+
+            isFlatKey(key) {
+                return this.flatKeys.includes(key);
+            }
+
+            getNoteFromPitch(pitchClass, key) {
+                const normalizedPitch = ((pitchClass % 12) + 12) % 12;
+                if (this.isFlatKey(key)) {
+                    return this.notesFlat[normalizedPitch];
+                } else {
+                    return this.notesSharp[normalizedPitch];
+                }
+            }
+
+            getNoteForScale(pitchClass, tonicName, isMinor) {
+                let contextKey = isMinor ? tonicName.toLowerCase() : tonicName;
+                return this.getNoteFromPitch(pitchClass, contextKey);
+            }
+        }
+
+        const harmonicEngine = new EnharmonicEngine();
+
+        // --- CONSTANTES MUSICALES Y DICCIONARIO ---
+        const CHROMATIC = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+        const NOMBRES_NOTAS = ["C", "C#/Db", "D", "D#/Eb", "E", "F", "F#/Gb", "G", "G#/Ab", "A", "A#/Bb", "B"];
+
+        const FORMULAS = {
+            "Tríada Mayor": [0, 4, 7],
+            "Tríada Menor": [0, 3, 7],
+            "Tríada Disminuida": [0, 3, 6],
+            "Tríada Aumentada": [0, 4, 8],
+            "Tríada Sus2": [0, 2, 7],
+            "Tríada Sus4": [0, 5, 7],
+            "Mayor Diatónica (Jónica)": [0, 2, 4, 5, 7, 9, 11],
+            "Menor Antigua (Eólica)": [0, 2, 3, 5, 7, 8, 10],
+            "Pentatónica Mayor": [0, 2, 4, 7, 9],
+            "Pentatónica Menor": [0, 3, 5, 7, 10],
+            "Escala de Blues": [0, 3, 5, 6, 7, 10],
+            "Dórica": [0, 2, 3, 5, 7, 9, 10],
+            "Frigia": [0, 1, 3, 5, 7, 8, 10],
+            "Lidia": [0, 2, 4, 6, 7, 9, 11],
+            "Mixolidia": [0, 2, 4, 5, 7, 9, 10],
+            "Locria": [0, 1, 3, 5, 6, 8, 10],
+            "Menor Armónica": [0, 2, 3, 5, 7, 8, 11],
+            "Menor Melódica": [0, 2, 3, 5, 7, 9, 11],
+            "Bebop Mayor": [0, 2, 4, 5, 7, 8, 9, 11],
+            "Bebop Dominante": [0, 2, 4, 5, 7, 9, 10, 11],
+            "Tonalidad Entera": [0, 2, 4, 6, 8, 10],
+            "Disminuida (Tono-Semitono)": [0, 2, 3, 5, 6, 8, 9, 11],
+            "Disminuida (Semitono-Tono)": [0, 1, 3, 4, 6, 7, 9, 10]
+        };
+
+        const URL_RECEPCIONISTA = "https://script.google.com/macros/s/AKfycbx6-2gfl9UGXOi5CQDaEC55_89hsRflJGF8DyiC9jz4hw82mhMaEmeK99Y4VxOKoVW6/exec";
+        
+        let datosApp = {
+            tonicaActualId: 0,
+            escalaActual: "Mayor Diatónica (Jónica)",
+            carpetaSeleccionada: null
+        };
+
+        function obtenerDeviceID() {
+            let id = localStorage.getItem('escalas_piano_device_id');
+            if (!id) {
+                id = crypto.randomUUID ? crypto.randomUUID() : 'id-' + Math.random().toString(36).substring(2, 15);
+                localStorage.setItem('escalas_piano_device_id', id);
+            }
+            return id;
+        }
+
+        function cargarFavoritos() {
+            let favs = localStorage.getItem('escalas_piano_favoritas');
+            if (favs) {
+                try { return JSON.parse(favs); } catch(e) {}
+            }
+            return {"General": []};
+        }
+
+        function guardarFavoritos(datos) {
+            localStorage.setItem('escalas_piano_favoritas', JSON.stringify(datos));
+        }
+
+        window.onload = () => {
+            llenarSelectores();
+            if (localStorage.getItem('escalas_piano_activado') === 'true') {
+                cambiarPantalla('pantalla-inicio');
+            }
+        };
+
+        function cambiarPantalla(id) {
+            document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+            document.getElementById(id).classList.add('activa');
+        }
+
+        function llenarSelectores() {
+            let sTon = document.getElementById('select-tonica');
+            let sEsc = document.getElementById('select-escala');
+            
+            NOMBRES_NOTAS.forEach((nombre, index) => {
+                let opt = document.createElement('option'); 
+                opt.value = index; 
+                opt.innerText = nombre;
+                sTon.appendChild(opt);
+            });
+            
+            Object.keys(FORMULAS).forEach(e => {
+                let opt = document.createElement('option'); opt.value = e; opt.innerText = e;
+                sEsc.appendChild(opt);
+            });
+        }
+
+        async function intentarActivar() {
+            let email = document.getElementById('input-email-login').value.trim();
+            let msj = document.getElementById('mensaje-login');
+
+            if (!email) { msj.innerText = "Por favor, ingresa un correo."; msj.style.color = "red"; return; }
+
+            msj.innerText = "Conectando con el servidor..."; msj.style.color = "#00f3ff";
+            
+            try {
+                let response = await fetch(URL_RECEPCIONISTA, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ email: email, deviceID: obtenerDeviceID() })
+                });
+
+                let data = await response.json();
+                if (data.status === "OK") {
+                    localStorage.setItem('escalas_piano_activado', 'true');
+                    cambiarPantalla('pantalla-inicio');
+                } else {
+                    msj.innerText = data.message || "Error de validación"; msj.style.color = "red";
+                }
+            } catch (error) {
+                msj.innerText = "Sin conexión a internet."; msj.style.color = "red";
+            }
+        }
+
+        function generarEscalaYMostrar() {
+            datosApp.tonicaActualId = parseInt(document.getElementById('select-tonica').value);
+            datosApp.escalaActual = document.getElementById('select-escala').value;
+            abrirVisorEscala(datosApp.tonicaActualId, datosApp.escalaActual);
+        }
+
+        function abrirVisorEscala(tonicaId, tipo) {
+            let nombreTonica = NOMBRES_NOTAS[tonicaId].split('/')[0];
+            document.getElementById('titulo-escala-vista').innerText = `${tipo} en ${nombreTonica}`;
+            dibujarTecladoPianoSVG(tonicaId, tipo);
+            cambiarPantalla('pantalla-escala');
+        }
+
+        // --- DIBUJADO DE TECLADO DE PIANO VECTORIAL (4 Octavas completas) ---
+        function dibujarTecladoPianoSVG(idxTonica, tipo) {
+            let formula = FORMULAS[tipo];
+            let nombreTonicaCrudo = NOMBRES_NOTAS[idxTonica].split('/')[0];
+            let esMenor = tipo.toLowerCase().includes('menor') || tipo.toLowerCase().includes('disminuida');
+
+            let formulaNotasPitches = formula.map(intervalo => (idxTonica + intervalo) % 12);
+            
+            // Mapeo preciso con ortografía enarmónica
+            let arrayNotasPermitidas = formulaNotasPitches.map(pitch => 
+                harmonicEngine.getNoteForScale(pitch, nombreTonicaCrudo, esMenor)
+            );
+
+            let svg = document.getElementById('svg-piano');
+            svg.innerHTML = '';
+            
+            // 4 Octavas * 7 teclas blancas * 42 px = 1176 px de ancho total
+            svg.setAttribute('viewBox', '0 0 1180 160');
+
+            const whiteKeyWidth = 42;
+            const whiteKeyHeight = 130;
+            const blackKeyWidth = 26;
+            const blackKeyHeight = 80;
+
+            const patronTeclas = [
+                {pitch: 0, type: 'W'}, {pitch: 1, type: 'B'},
+                {pitch: 2, type: 'W'}, {pitch: 3, type: 'B'},
+                {pitch: 4, type: 'W'},
+                {pitch: 5, type: 'W'}, {pitch: 6, type: 'B'},
+                {pitch: 7, type: 'W'}, {pitch: 8, type: 'B'},
+                {pitch: 9, type: 'W'}, {pitch: 10, type: 'B'},
+                {pitch: 11, type: 'W'}
+            ];
+
+            let totalOctavas = 4;
+            let whiteIndex = 0;
+
+            // Generar todas las teclas blancas (4 Octavas)
+            for (let oct = 0; oct < totalOctavas; oct++) {
+                patronTeclas.forEach(tecla => {
+                    if (tecla.type === 'W') {
+                        let pitchAbsoluto = tecla.pitch;
+                        let x = whiteIndex * whiteKeyWidth;
+                        let notaNombreReal = harmonicEngine.getNoteForScale(pitchAbsoluto, nombreTonicaCrudo, esMenor);
+                        let esEnEscala = arrayNotasPermitidas.includes(notaNombreReal);
+                        let esTonica = (pitchAbsoluto === idxTonica);
+
+                        let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                        rect.setAttribute("x", x);
+                        rect.setAttribute("y", 0);
+                        rect.setAttribute("width", whiteKeyWidth - 2);
+                        rect.setAttribute("height", whiteKeyHeight);
+                        rect.setAttribute("rx", 4);
+                        
+                        let fillColor = "#f0f0f0";
+                        if (esTonica && esEnEscala) fillColor = "#ff00ff";
+                        else if (esEnEscala) fillColor = "#00f3ff";
+
+                        rect.setAttribute("fill", fillColor);
+                        rect.setAttribute("stroke", "#333");
+                        rect.setAttribute("stroke-width", "1");
+                        // Se removió el destello de neon para mayor claridad
+                        svg.appendChild(rect);
+
+                        // Texto SOLO si pertenece a la escala
+                        if (esEnEscala) {
+                            let txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                            txt.setAttribute("x", x + (whiteKeyWidth / 2) - 1);
+                            txt.setAttribute("y", whiteKeyHeight - 15);
+                            txt.setAttribute("fill", "#000"); // Letras en negro para contraste con el color neón
+                            txt.setAttribute("font-size", "10px");
+                            txt.setAttribute("text-anchor", "middle");
+                            txt.setAttribute("font-weight", "bold");
+                            txt.textContent = notaNombreReal;
+                            svg.appendChild(txt);
+                        }
+
+                        whiteIndex++;
+                    }
+                });
+            }
+
+            // Generar teclas negras por encima (4 Octavas)
+            whiteIndex = 0;
+            for (let oct = 0; oct < totalOctavas; oct++) {
+                let baseXOffset = oct * (7 * whiteKeyWidth);
+                
+                const posicionesNegras = [
+                    {pitch: 1, offset: whiteKeyWidth - (blackKeyWidth / 2)},   // C#
+                    {pitch: 3, offset: (whiteKeyWidth * 2) - (blackKeyWidth / 2)}, // D#
+                    {pitch: 6, offset: (whiteKeyWidth * 4) - (blackKeyWidth / 2)}, // F#
+                    {pitch: 8, offset: (whiteKeyWidth * 5) - (blackKeyWidth / 2)}, // G#
+                    {pitch: 10, offset: (whiteKeyWidth * 6) - (blackKeyWidth / 2)} // A#
+                ];
+
+                posicionesNegras.forEach(negra => {
+                    let x = baseXOffset + negra.offset;
+                    let notaNombreReal = harmonicEngine.getNoteForScale(negra.pitch, nombreTonicaCrudo, esMenor);
+                    let esEnEscala = arrayNotasPermitidas.includes(notaNombreReal);
+                    let esTonica = (negra.pitch === idxTonica);
+
+                    let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                    rect.setAttribute("x", x);
+                    rect.setAttribute("y", 0);
+                    rect.setAttribute("width", blackKeyWidth);
+                    rect.setAttribute("height", blackKeyHeight);
+                    rect.setAttribute("rx", 3);
+
+                    let fillColor = "#222";
+                    if (esTonica && esEnEscala) fillColor = "#ff00ff";
+                    else if (esEnEscala) fillColor = "#00f3ff";
+
+                    rect.setAttribute("fill", fillColor);
+                    rect.setAttribute("stroke", "#000");
+                    rect.setAttribute("stroke-width", "1");
+                    // Se removió el destello de neon para mayor claridad
+                    svg.appendChild(rect);
+
+                    // Texto SOLO si pertenece a la escala
+                    if (esEnEscala) {
+                        let txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                        txt.setAttribute("x", x + (blackKeyWidth / 2));
+                        txt.setAttribute("y", blackKeyHeight - 15);
+                        txt.setAttribute("fill", "#000"); // Letras en negro para contraste
+                        txt.setAttribute("font-size", "9px");
+                        txt.setAttribute("text-anchor", "middle");
+                        txt.setAttribute("font-weight", "bold");
+                        txt.textContent = notaNombreReal;
+                        svg.appendChild(txt);
+                    }
+                });
+            }
+        }
+
+        // --- SISTEMA DE FAVORITOS (SWEETALERT2) ---
+        function abrirModalGuardar() {
+            let favs = cargarFavoritos();
+            let carpetas = Object.keys(favs);
+            let optionsHTML = carpetas.map(c => `<option value="${c}">${c}</option>`).join('');
+
+            Swal.fire({
+                title: 'Guardar Escala',
+                html: `
+                    <select id="swal-carpeta" class="swal2-input" style="background:#111; color:#00f3ff; border:1px solid #ff00ff;">
+                        ${optionsHTML}
+                    </select>
+                    <input id="swal-nueva" class="swal2-input" placeholder="O crear carpeta nueva..." style="background:#111; color:#fff; border:1px solid #333;">
+                `,
+                background: '#1a1a1a', color: '#fff',
+                showCancelButton: true, confirmButtonText: 'GUARDAR', cancelButtonText: 'CANCELAR',
+                confirmButtonColor: '#ff00ff', cancelButtonColor: '#333',
+                preConfirm: () => {
+                    let sel = document.getElementById('swal-carpeta').value;
+                    let nueva = document.getElementById('swal-nueva').value.trim();
+                    return nueva ? nueva : sel;
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    let nombreCarpeta = result.value;
+                    if (!favs[nombreCarpeta]) favs[nombreCarpeta] = [];
+                    
+                    let nombreT = NOMBRES_NOTAS[datosApp.tonicaActualId].split('/')[0];
+                    let nuevaEscala = {
+                        tonicaId: datosApp.tonicaActualId,
+                        tipo: datosApp.escalaActual,
+                        desc: `${datosApp.escalaActual} en ${nombreT}`
+                    };
+
+                    favs[nombreCarpeta].push(nuevaEscala);
+                    guardarFavoritos(favs);
+
+                    Swal.fire({
+                        title: '¡Guardado!', text: 'Escala agregada a tus favoritos.', icon: 'success',
+                        background: '#1a1a1a', color: '#fff', confirmButtonColor: '#00f3ff'
+                    });
+                }
+            });
+        }
+
+        function irAFavoritos() {
+            let favs = cargarFavoritos();
+            let divLista = document.getElementById('lista-carpetas');
+            divLista.innerHTML = '';
+
+            Object.keys(favs).forEach(nombre => {
+                let div = document.createElement('div'); div.className = 'item-fav';
+                
+                let btnAbrir = document.createElement('button');
+                btnAbrir.className = 'btn-principal btn-transparente';
+                btnAbrir.style.width = '70%'; btnAbrir.style.margin = '0';
+                btnAbrir.innerHTML = `📁 ${nombre}`;
+                btnAbrir.onclick = () => abrirCarpeta(nombre);
+
+                let btnBorrar = document.createElement('button');
+                btnBorrar.className = 'btn-principal btn-peligro';
+                btnBorrar.style.margin = '0';
+                btnBorrar.innerHTML = `🗑️`;
+                btnBorrar.onclick = () => borrarCarpeta(nombre);
+
+                div.appendChild(btnAbrir); div.appendChild(btnBorrar);
+                divLista.appendChild(div);
+            });
+
+            cambiarPantalla('pantalla-favoritos');
+        }
+
+        function abrirCarpeta(nombre) {
+            datosApp.carpetaSeleccionada = nombre;
+            let favs = cargarFavoritos();
+            let items = favs[nombre] || [];
+            
+            document.getElementById('titulo-carpeta-vista').innerText = nombre.toUpperCase();
+            
+            let divLista = document.getElementById('lista-escalas-items');
+            divLista.innerHTML = '';
+
+            items.forEach((escala, idx) => {
+                let div = document.createElement('div'); div.className = 'item-fav';
+                
+                let btnAbrir = document.createElement('button');
+                btnAbrir.className = 'btn-principal btn-transparente';
+                btnAbrir.style.width = '70%'; btnAbrir.style.margin = '0'; btnAbrir.style.color = '#fff';
+                btnAbrir.innerHTML = `▶ ${escala.desc}`;
+                btnAbrir.onclick = () => abrirVisorEscala(escala.tonicaId, escala.tipo);
+
+                let btnBorrar = document.createElement('button');
+                btnBorrar.className = 'btn-principal btn-peligro';
+                btnBorrar.style.margin = '0';
+                btnBorrar.innerHTML = `🗑️`;
+                btnBorrar.onclick = () => borrarEscala(nombre, idx);
+
+                div.appendChild(btnAbrir); div.appendChild(btnBorrar);
+                divLista.appendChild(div);
+            });
+
+            cambiarPantalla('pantalla-lista-escalas');
+        }
+
+        function borrarCarpeta(nombre) {
+            Swal.fire({
+                title: '¿Borrar carpeta?', text: "Se eliminarán todas las escalas adentro.",
+                icon: 'warning', showCancelButton: true, background: '#1a1a1a', color: '#fff',
+                confirmButtonColor: '#ff3333', confirmButtonText: 'Sí, borrar', cancelButtonColor: '#333'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    let favs = cargarFavoritos();
+                    delete favs[nombre];
+                    guardarFavoritos(favs);
+                    irAFavoritos();
+                }
+            });
+        }
+
+        function borrarEscala(nombreCarpeta, idx) {
+            let favs = cargarFavoritos();
+            favs[nombreCarpeta].splice(idx, 1);
+            guardarFavoritos(favs);
+            abrirCarpeta(nombreCarpeta);
+        }
+    </script>
+</body>
+</html>
