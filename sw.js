@@ -1,4 +1,4 @@
-const CACHE_NAME = 'piano-escalas-v1';
+const CACHE_NAME = 'piano-escalas-v2';
 const urlsToCache = [
   './',
   './index.html',
