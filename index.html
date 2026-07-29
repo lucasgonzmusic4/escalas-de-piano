@@ -8,8 +8,8 @@
     <meta name="theme-color" content="#0a0a0a">
     <title>Escalas de Piano - Lucas Gonzalez</title>
     
-    <!-- Enlaces obligatorios PWA -->
-    <link rel="manifest" href="./manifest.json">
+    <!-- Enlaces obligatorios PWA (con forzado de versión para limpiar caché) -->
+    <link rel="manifest" href="./manifest.json?v=3">
     <link rel="apple-touch-icon" href="./icono.png">
     
     <!-- Alertas Profesionales -->
@@ -85,23 +85,14 @@
             padding: 10px 0; 
             border-top: 1px solid #333; 
             border-bottom: 1px solid #333;
-            -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
+            -webkit-overflow-scrolling: touch; 
         }
-        /* Las 4 octavas requieren aprox 1180px para no perder proporción */
         #svg-piano { min-width: 1180px; height: 160px; overflow: visible; }
 
-        /* SENSOR DE ROTACIÓN: ESTADO CELULAR HORIZONTAL / PC */
+        /* SENSOR DE ROTACIÓN: ESTADO CELULAR HORIZONTAL / PC (Como en la guitarra) */
         @media (orientation: landscape) {
-            .contenedor-piano { 
-                justify-content: flex-start; 
-                overflow-x: auto; 
-            }
-            #svg-piano { 
-                min-width: 1180px; /* Fuerza el scroll horizontal para que las teclas no se achiquen */
-                width: 100%; 
-                height: auto; 
-                max-height: 220px; /* Limita la altura para no tapar los botones */
-            }
+            .contenedor-piano { justify-content: center; overflow-x: hidden; }
+            #svg-piano { min-width: auto; width: 100%; max-width: 1200px; height: auto; }
         }
 
         .titulo-seccion { color: #fff; font-weight: 300; font-size: 1em; margin-bottom: 5px; margin-top: 15px; width: 90%; max-width: 420px; text-align: left; }
@@ -413,7 +404,7 @@
                             let txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
                             txt.setAttribute("x", x + (whiteKeyWidth / 2) - 1);
                             txt.setAttribute("y", whiteKeyHeight - 15);
-                            txt.setAttribute("fill", "#000"); // Letras en negro para contraste con el color neón
+                            txt.setAttribute("fill", "#000"); // Letras en negro para contraste
                             txt.setAttribute("font-size", "10px");
                             txt.setAttribute("text-anchor", "middle");
                             txt.setAttribute("font-weight", "bold");
@@ -603,10 +594,10 @@
             abrirCarpeta(nombreCarpeta);
         }
 
-        // Registrar el Service Worker para PWA
+        // Registrar el Service Worker para PWA (con cache busting explícito)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
+                navigator.serviceWorker.register('./sw.js?v=3')
                     .then(registration => {
                         console.log('ServiceWorker registrado con éxito:', registration.scope);
                     })
