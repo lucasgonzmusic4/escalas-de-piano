@@ -1,44 +1,49 @@
-const CACHE_NAME = 'piano-escalas-v2';
+const CACHE_NAME = 'escalas-piano-v2'; 
+
 const urlsToCache = [
   './',
   './index.html',
   './manifest.json',
-  './icono.png'
+  './icono.png',
+  'https://cdn.jsdelivr.net/npm/sweetalert2@11'
 ];
 
-// Instalación: Guarda los archivos en caché
 self.addEventListener('install', event => {
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        return cache.addAll(urlsToCache);
-      })
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(urlsToCache).catch(err => {
+        console.log('Error guardando en caché:', err);
+      });
+    })
   );
 });
 
-// Fetch: Usa el caché si no hay internet
 self.addEventListener('fetch', event => {
+  // REGLA DE ORO: Deja pasar el login (POST) y Google Script directo a internet
+  if (event.request.method !== 'GET' || event.request.url.includes('script.google.com')) {
+    return; 
+  }
+
+  // Todo lo demás (visuales) lo saca del caché para el modo offline
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Devuelve el caché si lo encuentra, sino hace la petición a la red
-        return response || fetch(event.request);
-      })
+    caches.match(event.request).then(response => {
+      return response || fetch(event.request);
+    })
   );
 });
 
-// Activación: Limpia cachés viejos si actualizás la app
 self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
+          if (cacheName !== CACHE_NAME) {
             return caches.delete(cacheName);
           }
         })
       );
     })
   );
+  return self.clients.claim();
 });
