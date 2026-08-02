@@ -1,6 +1,6 @@
 {
-  "name": "Escalas de Piano Lucas Gonzalez",
-  "short_name": "Piano LG",
+  "name": "Escalas de Piano",
+  "short_name": "Escalas Piano",
   "description": "Calculadora visual de escalas de piano",
   "start_url": "./index.html",
   "display": "standalone",
